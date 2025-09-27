@@ -17,21 +17,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up Git
-        run: |
-          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-          git config --global user.name "${GITHUB_ACTOR}"
-          git remote add upstream https://github.com/paul1893/FlexToolTweak
-          git fetch upstream
-          git fetch --all --prune
-          git pull --rebase --strategy-option=theirs upstream master
     
       - name: Install Homebrew
         run: bash -c "$(curl -fsSL 'https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh')"
 
-      - name: Install Theos
-        run: bash -c "$(curl -fsSL 'https://raw.githubusercontent.com/paul1893/theos/master/bin/install-theos')"
+      - name: Set up Theos
+        run: |
+          export THEOS=~/theos
+          [ -d "$THEOS" ] && (cd "$THEOS" && git pull --recurse-submodules) || git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
+          echo "$THEOS/bin" >> $GITHUB_PATH
+          git clone --depth=1 https://github.com/theos/headers.git /tmp/theos-headers
+          mkdir -p ~/theos/vendor/include
+          cp -R /tmp/theos-headers/* ~/theos/vendor/include/
+          echo "THEOS_PACKAGE_SCHEME=rootless" >> $GITHUB_ENV
+          echo "THEOS_USE_LIBHOOKER=0" >> $GITHUB_ENV
+          echo "TWEAK_USE_ELLEKIT=0" >> $GITHUB_ENV
 
       - name: Install make
         run: brew install make
